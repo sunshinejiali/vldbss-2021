@@ -90,7 +90,6 @@ func (c *MRCluster) worker() {
 				if err != nil {
 					panic(err)
 				}
-
 				fs := make([]*os.File, t.nReduce)
 				bs := make([]*bufio.Writer, t.nReduce)
 				for i := range fs {
@@ -112,7 +111,38 @@ func (c *MRCluster) worker() {
 				// hint: don't encode results returned by ReduceF, and just output
 				// them into the destination file directly so that users can get
 				// results formatted as what they want.
-				panic("YOUR CODE HERE")
+				// panic("YOUR CODE HERE")
+				result :=  make(map[string][]string)
+				for i := 0; i < t.nMap; i++ {
+					rPath := reduceName(t.dataDir, t.jobName, i, t.taskNumber)
+					file, err := os.Open(rPath)
+					if err != nil {
+						panic(err)
+					}
+					// decode
+					dec := json.NewDecoder(file)
+					var kv KeyValue
+					for {
+						if dec.Decode(&kv) != nil {
+							break
+						}
+						if result[kv.Key] == nil {
+							result[kv.Key] = make([]string, 0)
+							result[kv.Key] = append(result[kv.Key], kv.Value)
+						} else {
+							result[kv.Key] = append(result[kv.Key], kv.Value)
+						}
+					}
+					SafeClose(file, nil)
+				}
+				// write to the file
+				rPath := mergeName(t.dataDir, t.jobName, t.taskNumber)
+				fs, bs := CreateFileAndBuf(rPath)
+				for key, kvs := range result {
+					s := t.reduceF(key, kvs)
+					WriteToBuf(bs, s)
+				}
+				SafeClose(fs, bs)
 			}
 			t.wg.Done()
 		case <-c.exit:
@@ -159,7 +189,31 @@ func (c *MRCluster) run(jobName, dataDir string, mapF MapF, reduceF ReduceF, map
 
 	// reduce phase
 	// YOUR CODE HERE :D
-	panic("YOUR CODE HERE")
+	// panic("YOUR CODE HERE")
+	tasks = make([]*task, 0, nReduce)
+	for i := 0; i < nReduce; i++ {
+		t := &task{
+			dataDir:    dataDir,
+			jobName:    jobName,
+			phase:      reducePhase,
+			taskNumber: i,
+			nReduce:    nReduce,
+			nMap:       nMap,
+			reduceF:    reduceF,
+		}
+		t.wg.Add(1)
+		tasks = append(tasks, t)
+		go func() { c.taskCh <- t }()
+	}
+	for _, t := range tasks {
+		t.wg.Wait()
+	}
+	outPut := make([]string, 0)
+	for i := 0; i < nReduce; i++ {
+		rPath := mergeName(dataDir, jobName, i)
+		outPut = append(outPut, rPath)
+	}
+	notify <- outPut
 }
 
 func ihash(s string) int {
