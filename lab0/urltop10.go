@@ -33,6 +33,7 @@ func URLTop10(nWorkers int) RoundsArgs {
 func URLCountMap(filename string, contents string) []KeyValue {
 	lines := strings.Split(contents, "\n")
 	kvs := make([]KeyValue, 0, len(lines))
+	// count[key] = sum
 	count := make(map[string]int)
 	for _, l := range lines {
 		l = strings.TrimSpace(l)
@@ -49,7 +50,7 @@ func URLCountMap(filename string, contents string) []KeyValue {
 
 // URLCountReduce is the reduce function in the first round
 func URLCountReduce(key string, values []string) string {
-	// return fmt.Sprintf("%s %s\n", key, strconv.Itoa(len(values)))
+	// count[key] = sum
 	var count = 0
 	for _, value := range values {
 		num, err := strconv.Atoi(value)
@@ -65,6 +66,7 @@ func URLCountReduce(key string, values []string) string {
 func URLTop10Map(filename string, contents string) []KeyValue {
 	lines := strings.Split(contents, "\n")
 	kvs := make([]KeyValue, 0, len(lines))
+	// cnts[key] = sum
 	cnts := make(map[string]int)
 	for _, l := range lines {
 		v := strings.TrimSpace(l)
@@ -78,7 +80,9 @@ func URLTop10Map(filename string, contents string) []KeyValue {
 		}
 		cnts[tmp[0]] += n
 	}
+	// Top10
 	us, cs := TopN(cnts, 10)
+	// format: key:"", value:url + " " + sum
 	for i, url := range us {
 		num := strconv.Itoa(cs[i])
 		kvs = append(kvs, KeyValue{"", url + " " + num})
@@ -101,7 +105,7 @@ func URLTop10Reduce(key string, values []string) string {
 		}
 		cnts[tmp[0]] = n
 	}
-
+	// Top10
 	us, cs := TopN(cnts, 10)
 	buf := new(bytes.Buffer)
 	for i := range us {

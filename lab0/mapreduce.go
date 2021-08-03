@@ -112,9 +112,12 @@ func (c *MRCluster) worker() {
 				// them into the destination file directly so that users can get
 				// results formatted as what they want.
 				// panic("YOUR CODE HERE")
+				// save result[key]:[value][value]...
 				result :=  make(map[string][]string)
+				// nMap tasks
 				for i := 0; i < t.nMap; i++ {
 					rPath := reduceName(t.dataDir, t.jobName, i, t.taskNumber)
+					// file -> *os.File
 					file, err := os.Open(rPath)
 					if err != nil {
 						panic(err)
@@ -133,12 +136,14 @@ func (c *MRCluster) worker() {
 							result[kv.Key] = append(result[kv.Key], kv.Value)
 						}
 					}
+					// close file
 					SafeClose(file, nil)
 				}
 				// write to the file
 				rPath := mergeName(t.dataDir, t.jobName, t.taskNumber)
 				fs, bs := CreateFileAndBuf(rPath)
 				for key, kvs := range result {
+					// call reduceF, get the string 's'
 					s := t.reduceF(key, kvs)
 					WriteToBuf(bs, s)
 				}
@@ -208,11 +213,13 @@ func (c *MRCluster) run(jobName, dataDir string, mapF MapF, reduceF ReduceF, map
 	for _, t := range tasks {
 		t.wg.Wait()
 	}
+	// result : output(contain all files)
 	outPut := make([]string, 0)
 	for i := 0; i < nReduce; i++ {
 		rPath := mergeName(dataDir, jobName, i)
 		outPut = append(outPut, rPath)
 	}
+	// chan
 	notify <- outPut
 }
 
