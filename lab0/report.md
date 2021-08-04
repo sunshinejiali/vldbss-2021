@@ -6,13 +6,13 @@
 
 `make test_example` 的实验截图
 
-![image](https://github.com/sunshinejiali/vldbss-2021/blob/mapreduce/images/TestExampleURLTop.png)
+![image](../images/TestExampleURLTop.png)
 
 ### 2. 基于 Map-Reduce 框架编写 Map-Reduce 函数
 
 `make test_homework` 的实验截图
 
-![image](https://github.com/sunshinejiali/vldbss-2021/blob/mapreduce/images/TestURLTop.png)
+![image](../images/TestURLTop.png)
 
 ## 实验总结
 
@@ -28,7 +28,7 @@ Map函数负责数据的预处理，得到一系列的KV Pair。紧接着，Redu
 
 URLTop的框架示意图如下：
 
-![image](https://github.com/sunshinejiali/vldbss-2021/blob/mapreduce/images/URLTop1.png)
+![image](../images/URLTop1.png)
 
 ### 2. 实验过程
 
